@@ -1,0 +1,10 @@
+version: '3'
+services:
+  order-service:
+    build: ./
+    environment:
+      OTEL_TRACES_EXPORTER: "logging"
+      OTEL_METRICS_EXPORTER: "logging"
+      OTEL_LOGS_EXPORTER: "logging"
+    ports:
+      - "8080:8080"
