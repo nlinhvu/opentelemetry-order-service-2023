@@ -3,8 +3,34 @@ services:
   order-service:
     build: ./
     environment:
-      OTEL_TRACES_EXPORTER: "logging"
+      OTEL_SERVICE_NAME: "order-service"
+      OTEL_TRACES_EXPORTER: "jaeger"
+      OTEL_EXPORTER_JAEGER_ENDPOINT: "http://jaeger:14250"
       OTEL_METRICS_EXPORTER: "logging"
       OTEL_LOGS_EXPORTER: "logging"
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
+      - jaeger-all-in-one
+
+  jaeger-all-in-one:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: always
+    ports:
+      - "16686:16686"
+      - "14250"
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: opentelemetry
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
