@@ -2,10 +2,11 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.2.0'
 	id 'io.spring.dependency-management' version '1.1.4'
+	id 'com.google.cloud.tools.jib' version '3.4.0'
 }
 
 group = 'vn.cloud'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.5-SNAPSHOT'
 
 java {
 	sourceCompatibility = '17'
@@ -48,4 +49,39 @@ bootJar {
 	dependsOn copyAgent
 
 	archiveFileName = "app.jar"
+}
+
+jib {
+	// https://hub.docker.com/_/amazoncorretto
+//	from.image = 'amazoncorretto:17.0.9-alpine'
+
+	// https://console.cloud.google.com/gcr/images/distroless/GLOBAL
+	from {
+		image = 'gcr.io/distroless/java17-debian12'
+		platforms {
+			platform {
+				architecture = 'arm64'
+				os = 'linux'
+			}
+		}
+	}
+
+	extraDirectories {
+		paths {
+			path {
+				from = layout.buildDirectory.dir("agent")
+				into = '/otelagent'
+			}
+		}
+	}
+
+	container {
+		jvmFlags = [
+		        '-javaagent:/otelagent/opentelemetry-javaagent.jar'
+		]
+	}
+}
+
+tasks.named('jibDockerBuild').configure {
+	dependsOn copyAgent
 }

@@ -1,7 +1,7 @@
 version: '3'
 services:
   order-service:
-    build: ./
+    image: order-service:0.0.5-SNAPSHOT
     environment:
       OTEL_SERVICE_NAME: "order-service"
       OTEL_TRACES_EXPORTER: "jaeger"
