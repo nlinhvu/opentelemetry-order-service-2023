@@ -10,13 +10,36 @@ services:
       OTEL_METRICS_EXPORTER: "prometheus"
       OTEL_EXPORTER_PROMETHEUS_HOST: "0.0.0.0"
       OTEL_EXPORTER_PROMETHEUS_PORT: "9464"
-      OTEL_LOGS_EXPORTER: "logging"
+      OTEL_LOGS_EXPORTER: "otlp"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://collector:4317"
     ports:
       - "8080:8080"
     depends_on:
       - postgres
       - jaeger-all-in-one
       - zipkin-all-in-one
+      - collector
+
+  collector:
+    container_name: collector
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    command:
+      - --config=/etc/otelcol-contrib/otel-collector.yml
+    volumes:
+      - ./docker/collector/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+    restart: always
+    ports:
+      - "4317" # OTLP gRPC receiver
+    depends_on:
+      - loki
+
+  loki:
+    container_name: loki
+    image: grafana/loki:latest
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: always
+    ports:
+      - "3100"
 
   prometheus:
     container_name: prometheus
