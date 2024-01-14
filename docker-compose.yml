@@ -4,9 +4,10 @@ services:
     image: order-service:0.0.5-SNAPSHOT
     environment:
       OTEL_SERVICE_NAME: "order-service"
-      OTEL_TRACES_EXPORTER: "jaeger,zipkin"
+      OTEL_TRACES_EXPORTER: "jaeger,zipkin,otlp"
       OTEL_EXPORTER_JAEGER_ENDPOINT: "http://jaeger:14250"
       OTEL_EXPORTER_ZIPKIN_ENDPOINT: "http://zipkin:9411/api/v2/spans"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://tempo:4317"
       OTEL_METRICS_EXPORTER: "prometheus"
       OTEL_EXPORTER_PROMETHEUS_HOST: "0.0.0.0"
       OTEL_EXPORTER_PROMETHEUS_PORT: "9464"
@@ -18,6 +19,7 @@ services:
       - postgres
       - jaeger-all-in-one
       - zipkin-all-in-one
+      - tempo
       - collector
 
   collector:
@@ -32,6 +34,17 @@ services:
       - "4317" # OTLP gRPC receiver
     depends_on:
       - loki
+
+  tempo:
+    container_name: tempo
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./docker/tempo/tempo.yml:/etc/tempo.yml
+    restart: always
+    ports:
+      - "4317"  # otlp grpc
+      - "3200"  # tempo as grafana datasource
 
   loki:
     container_name: loki
@@ -48,6 +61,7 @@ services:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+      - --enable-feature=exemplar-storage
     restart: always
     ports:
       - '9090:9090'
