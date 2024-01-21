@@ -3,12 +3,38 @@ receivers:
     protocols:
       grpc:
 
+processors:
+  # batch metrics before sending to reduce API usage
+  batch:
+    send_batch_max_size: 1000
+    send_batch_size: 100
+    timeout: 10s
+
 exporters:
+  otlp/jaeger:
+    endpoint: "http://jaeger:4317"
+    tls:
+      insecure: true
+
+  zipkin:
+    endpoint: http://zipkin:9411/api/v2/spans
+    format: proto
+
+  otlp/tempo:
+    endpoint: "http://tempo:4317"
+    tls:
+      insecure: true
+
   loki:
     endpoint: "http://loki:3100/loki/api/v1/push"
 
 service:
   pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/jaeger,zipkin,otlp/tempo]
     logs:
       receivers: [otlp]
+      processors: [batch]
       exporters: [loki]
