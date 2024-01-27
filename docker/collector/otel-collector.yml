@@ -11,6 +11,13 @@ processors:
     timeout: 10s
 
 exporters:
+  prometheusremotewrite:
+    endpoint: "http://prometheus:9090/api/v1/write"
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    enable_open_metrics: true
+
   otlp/jaeger:
     endpoint: "http://jaeger:4317"
     tls:
@@ -30,6 +37,10 @@ exporters:
 
 service:
   pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheusremotewrite]
     traces:
       receivers: [otlp]
       processors: [batch]

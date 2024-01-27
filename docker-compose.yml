@@ -5,13 +5,9 @@ services:
     environment:
       OTEL_SERVICE_NAME: "order-service"
       OTEL_RESOURCE_ATTRIBUTES: "service=order-service,env=dev"
-      OTEL_TRACES_EXPORTER: "otlp"
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://collector:4317"
-      OTEL_METRICS_EXPORTER: "prometheus"
-      OTEL_EXPORTER_PROMETHEUS_HOST: "0.0.0.0"
-      OTEL_EXPORTER_PROMETHEUS_PORT: "9464"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://collector:4317"
+      # Logs are disabled by default
       OTEL_LOGS_EXPORTER: "otlp"
-      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://collector:4317"
     ports:
       - "8080:8080"
     depends_on:
@@ -28,6 +24,7 @@ services:
     restart: always
     ports:
       - "4317" # OTLP gRPC receiver
+      - "8889" # Prometheus exporter metrics
     depends_on:
       - loki
       - jaeger-all-in-one
@@ -61,11 +58,12 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --enable-feature=exemplar-storage
+      - --web.enable-remote-write-receiver
     restart: always
     ports:
       - '9090:9090'
     depends_on:
-      - order-service
+      - collector
 
   grafana:
     container_name: grafana
@@ -77,6 +75,10 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+      - loki
+      - jaeger-all-in-one
+      - zipkin-all-in-one
+      - tempo
 
   jaeger-all-in-one:
     container_name: jaeger

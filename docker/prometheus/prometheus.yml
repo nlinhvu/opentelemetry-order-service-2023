@@ -4,7 +4,7 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: otel_java_agent
+  - job_name: otel_collector
     honor_timestamps: true
     scrape_interval: 15s
     scrape_timeout: 10s
@@ -12,4 +12,4 @@ scrape_configs:
     scheme: http
     static_configs:
       - targets:
-          - order-service:9464
+          - collector:8889
