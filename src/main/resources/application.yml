@@ -19,4 +19,8 @@ spring:
         format_sql: true
         default_schema: orders
 
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
